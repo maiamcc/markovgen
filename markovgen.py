@@ -1,3 +1,6 @@
+from random import randint
+from random import choice
+
 class Markov(object):
     def __init__(self, corpus_file):
         self.corpus = open(corpus_file)
@@ -22,7 +25,15 @@ class Markov(object):
 
         return temp_dict
 
-    def generate(length=100):
+    def generate(self, length=100):
         """Make random text out given length for number of words."""
+
+        seed_no = randint(0,len(self.words)-3) # choose random seed
+        output = [self.words[seed_no], self.words[seed_no + 1]]
+        for x in range(2, length):
+            output.append(choice(self.dictionary[output[x-2], output[x-1]]))
+
+        return " ".join(output)
+
 
 pp = Markov("test_data/pride_and_prejudice.txt")
