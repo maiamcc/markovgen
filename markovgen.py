@@ -13,6 +13,15 @@ class Markov(object):
     def make_dictionary(self):
         """Take every two words as key and third one as value."""
 
+        temp_dict = {}
+        for w1, w2, w3 in self.triples():
+            if temp_dict.get((w1, w2)):
+                temp_dict[w1, w2].append(w3)
+            else:
+                temp_dict[w1, w2]=[w3]
+
+        return temp_dict
+
     def generate(length=100):
         """Make random text out given length for number of words."""
 
