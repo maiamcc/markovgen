@@ -6,20 +6,15 @@ class Markov(object):
 		self.dictionary = self.make_dictionary()
 
 	def triples():
-    """
-    Prepare to make word triplets to feed the
-    dictionary function. 
-    """
+		"""Prepare to make word triplets to feed the dictionary function."""
+
+		for x in range(0, len(words), -3):
+			yield(words[x], words[x+1], words[x+2])
+
 	def make_dictionary(self):
-    """
-    Take every two words as key
-    and third one as value. 
-    """
+		"""Take every two words as key and third one as value."""
 
 	def generate(length=100):
-    """
-    Make random text out given length for number
-    of words.
-    """
+		"""Make random text out given length for number of words."""
 
 
