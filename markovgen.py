@@ -7,11 +7,9 @@ class Markov(object):
 
     def triples(self):
         """Prepare to make word triplets to feed the dictionary function."""
-        for x in range(0, 40):
-            print self.words[x], self.words[x+1], self.words[x+2]
+        for x in range(0, len(self.words)-3):
+            yield self.words[x], self.words[x+1], self.words[x+2]
 
-        #for x in range(0, len(words), -3):
-            #yield words[x], words[x+1], words[x+2]
     def make_dictionary(self):
         """Take every two words as key and third one as value."""
 
