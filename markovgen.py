@@ -2,6 +2,7 @@ from random import randint
 from random import choice
 import nltk
 
+'''
 class Markov(object):
     def __init__(self, corpus_file):
         self.corpus = open(corpus_file)
@@ -35,6 +36,7 @@ class Markov(object):
             output.append(choice(self.dictionary[output[x-2], output[x-1]]))
 
         return " ".join(output)
+'''
 
 class POS_Markov(object):
     def __init__(self, corpus_file):
@@ -90,13 +92,17 @@ class POS_Markov(object):
 
         return output
 
-    def populate_pos_random(self, length=100):
+    def populate_pos_random(self, pos_only, length=100):
         output = []
-        pos_only = pos_generate(length)
-        print "POS only:", pos_only
+        #pos_only = self.pos_generate(length)
+        #print "POS only:", pos_only
 
-        for item in pos_only
+        for item in pos_only:
+            output.append(choice(self.tag_dictionary[item]))
 
-hp = POS_Markov("short_corpus.txt")
+        return " ".join(output)
+
+print "Classes loaded."
+pp = POS_Markov("pride_prejudice.txt")
 
 
