@@ -66,6 +66,14 @@ class POS_Markov(object):
         for x in range(0, len(my_list)-3):
             yield my_list[x], my_list[x+1], my_list[x+2]
 
+    def triple_to_dict(self, triple, dict, ident):
+        """Assumes a word/pos pair as input. Ident = 0 --> word, ident = 1 --> pos."""
+
+        if dict.get((triple[0][ident], triple[1][ident])):
+            dict[triple[0][ident], triple[1][ident]].append(triple[2][ident])
+        else:
+            dict[triple[0][ident], triple[1][ident]]=[triple[2][ident]]
+
     def make_all_dicts(self):
         # add first two to tag dict.
         temp_triple = 0, self.tagged_words[0], self.tagged_words[1]
@@ -73,6 +81,12 @@ class POS_Markov(object):
         for pair in self.tagged_words[:-2]: # dont' do all of them, tho!
             temp_triple = temp_triple[1], temp_triple[2], pair
 
+            # word dict
+            self.triple_to_dict(temp_triple, self.word_dictionary, 0)
+
+            # pos dict
+            self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
+            '''
             # add to word dict
             if self.word_dictionary.get((temp_triple[0][0], temp_triple[1][0])):
                 self.word_dictionary[temp_triple[0][0], temp_triple[1][0]].append(temp_triple[2][0])
@@ -84,7 +98,7 @@ class POS_Markov(object):
                 self.pos_dictionary[temp_triple[0][1], temp_triple[1][1]].append(temp_triple[2][1])
             else:
                 self.pos_dictionary[temp_triple[0][1], temp_triple[1][1]]=[temp_triple[2][1]]
-
+            '''
             # add to tag dict
             if self.tag_dictionary.get(pair[1]):
                 self.tag_dictionary[pair[1]].append(pair[0])
@@ -144,7 +158,7 @@ class POS_Markov(object):
 
         return " ".join(output)
 
-hp = POS_Markov("texts/chamber_secrets_tagged.yml")
+hp = POS_Markov("texts/short_corpus_tagged.yml")
 
 # print "Classes loaded."
 # pp = POS_Markov("pride_prejudice.txt")
