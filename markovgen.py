@@ -1,6 +1,6 @@
 from random import randint
 from random import choice
-import yaml
+import cPickle
 
 '''
 class Markov(object):
@@ -37,20 +37,28 @@ class Markov(object):
 
         return " ".join(output)
 '''
+
+class Word(object):
+    def __init__(self, the_word, pos):
+        self.the_word = the_word
+        self.pos = pos
+    def __repr__(self):
+        return "%s (%s)" % (self.the_word, self.pos)
+    def __str__(self):
+        return self.the_word
+
 class POS_Markov(object):
     def __init__(self, corpus_file):
         self.corpus_file = corpus_file
-        self.tagged_words = self.tagged_words_from_yaml()
+        self.tagged_words = self.open_serialized(corpus_file)
         self.word_dictionary = {}
         self.pos_dictionary = {}
         self.tag_dictionary = {}
         self.make_all_dicts()
 
-# if call only once then leave as funct.--otherwise, store in the object
-
-    def tagged_words_from_yaml(self):
-        with open(self.corpus_file, 'r') as infile:
-            data = yaml.load(infile)
+    def open_serialized(self, filename):
+        with open(filename, 'r') as infile:
+            data = cPickle.load(infile)
         return data
 
     def triple_to_dict(self, triple, dict, ident):
@@ -63,23 +71,37 @@ class POS_Markov(object):
 
     def make_all_dicts(self):
         # add first two to tag dict.
-        temp_triple = 0, self.tagged_words[0], self.tagged_words[1]
+        temp_triple = 0, Word(self.tagged_words[0][0], self.tagged_words[0][1]), \
+            Word(self.tagged_words[1][0], self.tagged_words[1][1])
 
         for pair in self.tagged_words[:-2]: # dont' do all of them, tho!
-            temp_triple = temp_triple[1], temp_triple[2], pair
+            temp_triple = temp_triple[1], temp_triple[2], Word(pair[0], pair[1])
 
             # word dict
-            self.triple_to_dict(temp_triple, self.word_dictionary, 0)
+            if self.word_dictionary.get((temp_triple[0], temp_triple[1])):
+                self.word_dictionary[temp_triple[0], temp_triple[1]].append(temp_triple[2])
+            else:
+                self.word_dictionary[temp_triple[0], temp_triple[1]]=[temp_triple[2]]
+
+
+            # self.triple_to_dict(temp_triple, self.word_dictionary, 0)
 
             # pos dict
-            self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
 
+            if self.pos_dictionary.get((temp_triple[0].pos, temp_triple[1].pos)):
+                self.pos_dictionary[temp_triple[0].pos, temp_triple[1].pos].append(temp_triple[2].pos)
+            else:
+                self.pos_dictionary[temp_triple[0].pos, temp_triple[1].pos]=[temp_triple[2].pos]
+            # self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
+
+    '''
             # add to tag dict
             if self.tag_dictionary.get(pair[1]):
                 self.tag_dictionary[pair[1]].append(pair[0])
             else:
                 self.tag_dictionary[pair[1]] = [pair[0]]
-
+    '''
+    '''
     def make_tag_dictionary(self):
         """Make a dictionary indexing every word in the corpus by part of speech."""
 
@@ -93,13 +115,20 @@ class POS_Markov(object):
                 temp_dict[tag] = [tagged_word]
 
         return temp_dict
+    '''
+
+    def get_word_by_pos(self, wordlist, pos):
+        return [word for word in wordlist if word.pos == pos]
 
     def random_pos(self, length=100):
         """Make random text (in parts-of-speech) out given length for number of words."""
 
         # pick a random key from pos dictionary
-        seed_pair = choice(self.pos_dictionary.keys())
-        output = [seed_pair[0], seed_pair[1]]
+        # seed_pair = choice(self.pos_dictionary.keys())
+        # output = [seed_pair[0], seed_pair[1]]
+        # TEMPORARILY FREEZING THE SEED
+
+        output = ['NNP', 'NNP']
 
         for x in range(2, length):
             output.append(choice(self.pos_dictionary[output[x-2], output[x-1]]))
@@ -107,21 +136,19 @@ class POS_Markov(object):
         return output
 
     def generate(self, length=100):
-        output = []
+        # TEMPORARILY FREEZING THE SEED
+        output = [Word('It', 'PRP'), Word('is', 'VBZ')]
 
-        pos_only = self.random_pos(length)
-        for item in pos_only:
-            output.append(choice(self.tag_dictionary[item]))
+        pos_only = self.random_pos(length) #crappy var name
+        for x in range(2, length):
+            options = self.word_dictionary[output[x-2], output[x-1]]
+            output.append(get_word_by_pos(options, pos_only[x]))
 
         return " ".join(output)
 
-hp = POS_Markov("texts/short_corpus_tagged.yml")
-
-# print "Classes loaded."
-# pp = POS_Markov("pride_prejudice.txt")
+hp = POS_Markov("texts/pride_prejudice_cPickle.txt")
 
 # weighting dict list manually??
-# timing functions/loadtime (end-start)
 # ab -> c, and also know that next key will start with b
 # is there info you're not using?
 # garbage collection
