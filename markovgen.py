@@ -44,6 +44,7 @@ class POS_Markov(object):
         self.word_dictionary = {}
         self.pos_dictionary = {}
         self.tag_dictionary = {}
+        self.make_all_dicts()
 
 # if call only once then leave as funct.--otherwise, store in the object
 
@@ -51,20 +52,6 @@ class POS_Markov(object):
         with open(self.corpus_file, 'r') as infile:
             data = yaml.load(infile)
         return data
-
-    def make_tuples(self, wordlist):
-        output = []
-        for pair in wordlist:
-            output.append(tuple(pair.split(", ")))
-        return output
-
-    def tag_from_tuple(self, tuple):
-        return tuple[1]
-
-    def triples(self, my_list):
-        """Prepare to make word triplets to feed the dictionary function."""
-        for x in range(0, len(my_list)-3):
-            yield my_list[x], my_list[x+1], my_list[x+2]
 
     def triple_to_dict(self, triple, dict, ident):
         """Assumes a word/pos pair as input. Ident = 0 --> word, ident = 1 --> pos."""
@@ -86,41 +73,13 @@ class POS_Markov(object):
 
             # pos dict
             self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
-            '''
-            # add to word dict
-            if self.word_dictionary.get((temp_triple[0][0], temp_triple[1][0])):
-                self.word_dictionary[temp_triple[0][0], temp_triple[1][0]].append(temp_triple[2][0])
-            else:
-                self.word_dictionary[temp_triple[0][0], temp_triple[1][0]]=[temp_triple[2][0]]
 
-            # add to pos dict
-            if self.pos_dictionary.get((temp_triple[0][1], temp_triple[1][1])):
-                self.pos_dictionary[temp_triple[0][1], temp_triple[1][1]].append(temp_triple[2][1])
-            else:
-                self.pos_dictionary[temp_triple[0][1], temp_triple[1][1]]=[temp_triple[2][1]]
-            '''
             # add to tag dict
             if self.tag_dictionary.get(pair[1]):
                 self.tag_dictionary[pair[1]].append(pair[0])
             else:
                 self.tag_dictionary[pair[1]] = [pair[0]]
 
-    '''
-    def make_dictionary(self, my_list):
-        """Take every two words as key and third one as value."""
-
-        temp_dict = {}
-        for w1, w2, w3 in self.triples(my_list):
-            if temp_dict.get((w1, w2)):
-                temp_dict[w1, w2].append(w3)
-            else:
-                temp_dict[w1, w2]=[w3]
-
-        return temp_dict
-    '''
-
-# build tag dict DURING tagging of text
-# and also make pos_dict during that step
     def make_tag_dictionary(self):
         """Make a dictionary indexing every word in the corpus by part of speech."""
 
@@ -135,24 +94,22 @@ class POS_Markov(object):
 
         return temp_dict
 
-    def pos_generate(self, length=100):
+    def random_pos(self, length=100):
         """Make random text (in parts-of-speech) out given length for number of words."""
 
-        # don't need this! -- choose random key!
-        pos_word_list = self.pos_word_list()
-        seed_no = randint(0,len(pos_word_list)-3) # choose random seed
-        output = [pos_word_list[seed_no], pos_word_list[seed_no + 1]]
+        # pick a random key from pos dictionary
+        seed_pair = choice(self.pos_dictionary.keys())
+        output = [seed_pair[0], seed_pair[1]]
 
         for x in range(2, length):
             output.append(choice(self.pos_dictionary[output[x-2], output[x-1]]))
 
         return output
 
-    def populate_pos_random(self, pos_only, length=100):
+    def generate(self, length=100):
         output = []
-        #pos_only = self.pos_generate(length)
-        #print "POS only:", pos_only
 
+        pos_only = self.random_pos(length)
         for item in pos_only:
             output.append(choice(self.tag_dictionary[item]))
 

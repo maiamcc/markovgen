@@ -1,9 +1,12 @@
 import time
-import nltk
+import yaml
 
-hpwords = open("chamber_secrets.txt").read().split()
+def tagged_words_from_yaml(filename):
+        with open(filename, 'r') as infile:
+            data = yaml.load(infile)
+        return data
 
 t0 = time.clock()
-nltk.pos_tag(hpwords)
+tagged_words_from_yaml("texts/pride_prejudice_tagged.yml")
 tend = time.clock()
 print tend - t0
