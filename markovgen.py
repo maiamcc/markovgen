@@ -50,13 +50,22 @@ class POS_Markov(object):
             data = cPickle.load(infile)
         return data
 
+    #TODO: this could totally be more efficient
     def triple_to_dict(self, triple, dict, ident):
         """Assumes a word/pos pair as input. Ident = 0 --> word, ident = 1 --> pos."""
 
-        if dict.get((triple[0][ident], triple[1][ident])):
-            dict[triple[0][ident], triple[1][ident]].append(triple[2][ident])
+        if ident == 0:
+            if dict.get((triple[0], triple[1])):
+                dict[triple[0], triple[1]].append(triple[2])
+            else:
+                dict[triple[0], triple[1]]=[triple[2]]
+        elif ident == 1:
+            if dict.get((triple[0][1], triple[1][1])):
+                dict[triple[0][1], triple[1][1]].append(triple[2][1])
+            else:
+                dict[triple[0][1], triple[1][1]]=[triple[2][1]]
         else:
-            dict[triple[0][ident], triple[1][ident]]=[triple[2][ident]]
+            return
 
     def make_dicts(self):
         """Populates two dictionaries, one of words, one of parts of speech.
@@ -76,7 +85,7 @@ class POS_Markov(object):
             self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
 
     def get_word_by_pos(self, wordlist, pos):
-        return [item[0] for item in wordlist if item[1] == pos]
+        return [item for item in wordlist if item[1] == pos]
 
     def random_pos(self, length=100):
         """Make random text (in parts-of-speech) out given length for number of words."""
@@ -94,18 +103,23 @@ class POS_Markov(object):
         pos_only = self.random_pos(length) #crappy var name
         print pos_only
 
-        output = [self.seed_pair[0][0], self.seed_pair[1][0]]
-        print "Starting output:", output
+        result = [self.seed_pair[0], self.seed_pair[1]]
+        print "Starting output:", result
 
         for x in range(2, length):
             print "Index:", x
-            options = self.word_dictionary[output[x-2], output[x-1]]
+            all_options = self.word_dictionary[result[x-2], result[x-1]]
             print "POS needed:", pos_only[x]
-            output.append(choice(options))
+            pos_options = self.get_word_by_pos(all_options, pos_only[x])
+            print "POS options:", pos_options
+            result.append(choice(pos_options))
                 #self.get_word_by_pos(options, pos_only[x])))
-            print "Output so far:", output
+            print "Output so far:", result
             print "----------"
 
+        output = []
+        for pair in result:
+            output.append(pair[0])
         return " ".join(output)
 
 # test = POS_Markov("multifox_cPickle.txt")
