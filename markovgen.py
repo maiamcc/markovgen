@@ -42,6 +42,7 @@ class POS_Markov(object):
         self.tagged_words = self.open_serialized(corpus_file)
         self.word_dictionary = {}
         self.pos_dictionary = {}
+        self.tag_dictionary = {}
         self.make_dicts()
         self.seed_pair = None
 
@@ -84,6 +85,12 @@ class POS_Markov(object):
             # pos dict
             self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
 
+            # add to tag dict
+            if self.tag_dictionary.get(pair[1]):
+                self.tag_dictionary[pair[1]].append(pair)
+            else:
+                self.tag_dictionary[pair[1]] = [pair]
+
     def get_word_by_pos(self, wordlist, pos):
         return [item for item in wordlist if item[1] == pos]
 
@@ -99,22 +106,43 @@ class POS_Markov(object):
             output.append(choice(self.pos_dictionary[output[x-2], output[x-1]]))
         return output
 
+    def find_stopgap(self, curword, nextpos):
+        for k, v in self.word_dictionary:
+            if k[0] == curword and k[1][1] == nextpos:
+                return k[1][1]
+
     def generate(self, length=100):
         pos_only = self.random_pos(length) #crappy var name
         print pos_only
 
         result = [self.seed_pair[0], self.seed_pair[1]]
         print "Starting output:", result
+        next = None
 
         for x in range(2, length):
             print "Index:", x
-            all_options = self.word_dictionary[result[x-2], result[x-1]]
-            print "POS needed:", pos_only[x]
-            pos_options = self.get_word_by_pos(all_options, pos_only[x])
-            print "POS options:", pos_options
-            result.append(choice(pos_options))
-                #self.get_word_by_pos(options, pos_only[x])))
-            print "Output so far:", result
+            all_options = self.word_dictionary.get((result[x-2], result[x-1]))
+            if all_options:
+                print "POS needed:", pos_only[x]
+                pos_options = self.get_word_by_pos(all_options, pos_only[x])
+                print "POS options:", pos_options
+                if len(pos_options) > 0:
+                    result.append(choice(pos_options))
+                    print "Appended from word list"
+                else:
+                    current = choice(self.tag_dictionary[pos_only[x]])
+                    next = self.find_stopgap(current, pos_only[x+1])
+                    result.append(current)
+                    result.append(next)
+                    length -= 1
+                    print "Appended random POS"
+
+
+            '''
+            else:
+                result.append(choice(self.tag_dictionary[pos_only[x]]))
+                print "Appended random POS"
+            '''
             print "----------"
 
         output = []
