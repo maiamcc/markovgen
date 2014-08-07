@@ -2,7 +2,6 @@ from random import randint
 from random import choice
 import cPickle
 
-'''
 class Markov(object):
     def __init__(self, corpus_file):
         self.corpus = open(corpus_file)
@@ -36,16 +35,6 @@ class Markov(object):
             output.append(choice(self.dictionary[output[x-2], output[x-1]]))
 
         return " ".join(output)
-'''
-
-class Word(object):
-    def __init__(self, the_word, pos):
-        self.the_word = the_word
-        self.pos = pos
-    def __repr__(self):
-        return "%s (%s)" % (self.the_word, self.pos)
-    def __str__(self):
-        return self.the_word
 
 class POS_Markov(object):
     def __init__(self, corpus_file):
@@ -53,8 +42,8 @@ class POS_Markov(object):
         self.tagged_words = self.open_serialized(corpus_file)
         self.word_dictionary = {}
         self.pos_dictionary = {}
-        self.tag_dictionary = {}
-        self.make_all_dicts()
+        self.make_dicts()
+        self.seed_pair = None
 
     def open_serialized(self, filename):
         with open(filename, 'r') as infile:
@@ -69,84 +58,58 @@ class POS_Markov(object):
         else:
             dict[triple[0][ident], triple[1][ident]]=[triple[2][ident]]
 
-    def make_all_dicts(self):
-        # add first two to tag dict.
-        temp_triple = 0, Word(self.tagged_words[0][0], self.tagged_words[0][1]), \
-            Word(self.tagged_words[1][0], self.tagged_words[1][1])
+    def make_dicts(self):
+        """Populates two dictionaries, one of words, one of parts of speech.
+        For every three words in the text, (w1, w2) --> w3"""
 
-        for pair in self.tagged_words[:-2]: # dont' do all of them, tho!
-            temp_triple = temp_triple[1], temp_triple[2], Word(pair[0], pair[1])
+        # adds first two words of corpus to temp triple
+        temp_triple = 0, self.tagged_words[0], self.tagged_words[1]
+
+        for pair in self.tagged_words[2:]:
+            temp_triple = temp_triple[1], temp_triple[2], pair
+            #Word(pair[0], pair[1])
 
             # word dict
-            if self.word_dictionary.get((temp_triple[0], temp_triple[1])):
-                self.word_dictionary[temp_triple[0], temp_triple[1]].append(temp_triple[2])
-            else:
-                self.word_dictionary[temp_triple[0], temp_triple[1]]=[temp_triple[2]]
-
-
-            # self.triple_to_dict(temp_triple, self.word_dictionary, 0)
+            self.triple_to_dict(temp_triple, self.word_dictionary, 0)
 
             # pos dict
-
-            if self.pos_dictionary.get((temp_triple[0].pos, temp_triple[1].pos)):
-                self.pos_dictionary[temp_triple[0].pos, temp_triple[1].pos].append(temp_triple[2].pos)
-            else:
-                self.pos_dictionary[temp_triple[0].pos, temp_triple[1].pos]=[temp_triple[2].pos]
-            # self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
-
-    '''
-            # add to tag dict
-            if self.tag_dictionary.get(pair[1]):
-                self.tag_dictionary[pair[1]].append(pair[0])
-            else:
-                self.tag_dictionary[pair[1]] = [pair[0]]
-    '''
-    '''
-    def make_tag_dictionary(self):
-        """Make a dictionary indexing every word in the corpus by part of speech."""
-
-        tagged_words = self.tagged_words()
-
-        temp_dict = {}
-        for tagged_word, tag in tagged_words:
-            if temp_dict.get(tag):
-                temp_dict[tag].append(tagged_word)
-            else:
-                temp_dict[tag] = [tagged_word]
-
-        return temp_dict
-    '''
+            self.triple_to_dict(temp_triple, self.pos_dictionary, 1)
 
     def get_word_by_pos(self, wordlist, pos):
-        return [word for word in wordlist if word.pos == pos]
+        return [item[0] for item in wordlist if item[1] == pos]
 
     def random_pos(self, length=100):
         """Make random text (in parts-of-speech) out given length for number of words."""
 
-        # pick a random key from pos dictionary
-        # seed_pair = choice(self.pos_dictionary.keys())
-        # output = [seed_pair[0], seed_pair[1]]
-        # TEMPORARILY FREEZING THE SEED
-
-        output = ['NNP', 'NNP']
+        # pick a random key from word dictionary
+        seed_no = randint(0,len(self.tagged_words)-3) # choose random seed
+        self.seed_pair = [self.tagged_words[seed_no], self.tagged_words[seed_no + 1]]
+        output = [self.seed_pair[0][1], self.seed_pair[1][1]]
 
         for x in range(2, length):
             output.append(choice(self.pos_dictionary[output[x-2], output[x-1]]))
-
         return output
 
     def generate(self, length=100):
-        # TEMPORARILY FREEZING THE SEED
-        output = [Word('It', 'PRP'), Word('is', 'VBZ')]
-
         pos_only = self.random_pos(length) #crappy var name
+        print pos_only
+
+        output = [self.seed_pair[0][0], self.seed_pair[1][0]]
+        print "Starting output:", output
+
         for x in range(2, length):
+            print "Index:", x
             options = self.word_dictionary[output[x-2], output[x-1]]
-            output.append(get_word_by_pos(options, pos_only[x]))
+            print "POS needed:", pos_only[x]
+            output.append(choice(options))
+                #self.get_word_by_pos(options, pos_only[x])))
+            print "Output so far:", output
+            print "----------"
 
         return " ".join(output)
 
-hp = POS_Markov("texts/pride_prejudice_cPickle.txt")
+# test = POS_Markov("multifox_cPickle.txt")
+pp = POS_Markov("texts/pride_prejudice_cPickle.txt")
 
 # weighting dict list manually??
 # ab -> c, and also know that next key will start with b
