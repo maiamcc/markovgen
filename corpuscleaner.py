@@ -1,5 +1,8 @@
 from sys import argv
 
+'''Removes numbers, the word "Chapter", and any additional specified
+strings from a given text file.'''
+
 script, source = argv
 
 source_file = open(source)
@@ -8,14 +11,12 @@ source_text = source_file.read()
 
 source_file.close()
 
-header2 = "Lord Of The Rings - Part 2 - The Two Towers By J R R Tolkien"
-header3 = "Lord Of The Rings - Part 3 - The Return Of The King By J R R Tolkien"
+# to_remove = "Unique annoying text that appears frequently in this corpus"
 new_source = source_text.translate(None, "0123456789_")
 new_source = new_source.replace("Chapter", "")
 new_source = new_source.replace("CHAPTER", "")
 new_source = new_source.replace("BOOK", "")
-new_source = new_source.replace(header2, "")
-new_source = new_source.replace(header3, "")
+# new_source = new_source.replace(to_remove, "")
 
 
 source_file = open(source, "w")
