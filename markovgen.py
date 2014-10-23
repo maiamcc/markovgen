@@ -1,6 +1,7 @@
+from collections import defaultdict
+import cPickle
 from random import randint
 from random import choice
-import cPickle
 
 class Markov(object):
     """A class that analyzes the word occurance patterns of a given
@@ -11,33 +12,33 @@ class Markov(object):
         self.corpus = open(corpus_file)
         self.text = self.corpus.read()
         self.words = self.text.split()
-        self.dictionary = self.make_dictionary()
 
-    def triples(self):
-        """Make triplets of every three consecutive
-        words to feed the dictionary function."""
-        for x in range(0, len(self.words)-3):
-            yield self.words[x], self.words[x+1], self.words[x+2]
+    def ngrams(self, n):
+        """Make ngrams of every n consecutive
+        words to feed the dictionary function, AS LIST."""
+        for x in range(0, len(self.words)-n):
+            yield [self.words[x+i] for i in range(n)]
 
-    def make_dictionary(self):
-        """Take every two words as key and third one as value."""
+    def make_word_dictionary(self, n):
+        """For every ngram, takes first n-1 words as key, and last as value."""
 
-        temp_dict = {}
-        for w1, w2, w3 in self.triples():
-            if temp_dict.get((w1, w2)):
-                temp_dict[w1, w2].append(w3)
-            else:
-                temp_dict[w1, w2]=[w3]
+        # TODO: make case/punct-insensitive?
+
+        temp_dict = defaultdict(list)
+        for wordlist in self.ngrams(n):
+            final_word = wordlist.pop()
+            temp_dict[tuple(wordlist)].append(final_word)
 
         return temp_dict
 
-    def generate(self, length=100):
-        """Make random text out given length for number of words."""
-
-        seed_no = randint(0,len(self.words)-3) # choose random seed
-        output = [self.words[seed_no], self.words[seed_no + 1]]
-        for x in range(2, length):
-            output.append(choice(self.dictionary[output[x-2], output[x-1]]))
+    def generate(self, length=100, n=3):
+        """Make random text of given length (using ngrams of the given n)."""
+        word_dict = self.make_ngram_dictionary(n)
+        seed_no = randint(0,len(self.words)-n) # choose random seed
+        output = [self.words[seed_no+x] for x in range(n-1)]
+        for x in range(n-1, length):
+            next_key = tuple(output[-(n-1):])
+            output.append(choice(word_dict[next_key]))
 
         return " ".join(output)
 
@@ -171,7 +172,7 @@ class POS_Markov(object):
         return " ".join(output)
 
 # This is a test Markov gen
-testgen = POS_Markov("texts/pride_prejudice_cPickle.txt")
+testgen = Markov("texts/plain/pride_prejudice.txt")
 
 # TODO/notes
 # weighting dict list manually??
